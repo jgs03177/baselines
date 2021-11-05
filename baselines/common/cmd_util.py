@@ -9,7 +9,7 @@ except ImportError:
     MPI = None
 
 import gym
-from gym.wrappers import FlattenDictWrapper
+#from gym.wrappers import FlattenDictWrapper
 from baselines import logger
 from baselines.bench import Monitor
 from baselines.common import set_global_seeds
@@ -64,8 +64,10 @@ def make_env(env_id, env_type, mpi_rank=0, subrank=0, seed=None, reward_scale=1.
         env = gym.make(env_id)
 
     if flatten_dict_observations and isinstance(env.observation_space, gym.spaces.Dict):
-        keys = env.observation_space.spaces.keys()
-        env = gym.wrappers.FlattenDictWrapper(env, dict_keys=list(keys))
+        from gym.wrappers import FilterObservation, FlattenObservation
+        env = FlattenObservation(FilterObservation(env, keys))
+        #keys = env.observation_space.spaces.keys()
+        #env = gym.wrappers.FlattenDictWrapper(env, dict_keys=list(keys))
 
     env.seed(seed + subrank if seed is not None else None)
     env = Monitor(env,
@@ -107,7 +109,9 @@ def make_robotics_env(env_id, seed, rank=0):
     """
     set_global_seeds(seed)
     env = gym.make(env_id)
-    env = FlattenDictWrapper(env, ['observation', 'desired_goal'])
+    from gym.wrappers import FilterObservation, FlattenObservation
+    env = FlattenObservation(FilterObservation(env, keys))
+    #env = FlattenDictWrapper(env, ['observation', 'desired_goal'])
     env = Monitor(
         env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)),
         info_keywords=('is_success',))
